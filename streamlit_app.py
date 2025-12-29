@@ -53,7 +53,7 @@ def select_dataset(start_date: datetime, base_df: pd.DataFrame, daily_2025_df: p
     return daily_2025_df if start_date.year == 2025 else base_df
 
 
-def render_metrics_and_chart(source_df: pd.DataFrame, start_date: datetime, end_date: datetime) -> None:
+def render_metrics_and_chart(source_df: pd.DataFrame, start_date: datetime, end_date: datetime) -> pd.DataFrame | None:
     if source_df.empty:
         st.warning("No data available for the selected dataset.")
         return
@@ -93,14 +93,17 @@ def render_metrics_and_chart(source_df: pd.DataFrame, start_date: datetime, end_
         color_discrete_sequence=PALETTE,
     )
 
-    fig.update_layout(hovermode="x unified", legend_title_text="Portfolio")
+    fig.update_layout(
+        hovermode="x unified",
+        legend_title_text="Portfolio",
+        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+    )
     fig.update_traces(hovertemplate="$%{y:,.0f}<extra></extra>")
     fig.update_xaxes(title_text="")
     fig.update_yaxes(tickformat="$,.0f", title_text="Portfolio Value")
     st.plotly_chart(fig, use_container_width=True)
 
-    with st.expander("View Source Data"):
-        st.dataframe(filtered_df)
+    return filtered_df
 
 
 def main() -> None:
@@ -121,16 +124,20 @@ def main() -> None:
     # if start_date.year == 2025:
     #     st.info("Using daily data for 2025 selections.")
 
-    render_metrics_and_chart(active_df, start_date, end_date)
+    filtered_df = render_metrics_and_chart(active_df, start_date, end_date)
 
-    st.subheader("Filter by Date")
+    # st.subheader("Filter by Date")
     st.slider(
-        "Select Range:",
+        "Select Date Range:",
         min_value=min_date,
         max_value=max_date,
         format="MM/DD/YY",
         key="date_range",
     )
+
+    if filtered_df is not None:
+        with st.expander("View Source Data"):
+            st.dataframe(filtered_df)
 
 
 if __name__ == "__main__":
